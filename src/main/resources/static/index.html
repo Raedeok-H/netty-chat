@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Room</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        #messages { height: 300px; border: 1px solid #ccc; padding: 10px; overflow-y: scroll; margin-bottom: 10px; background-color: #fafafa; }
+        #messageInput { width: 75%; }
+        #username { width: 20%; }
+        button { width: 10%; }
+    </style>
+    <script>
+        var socket = new WebSocket("ws://localhost:8000/chat");
+        socket.onmessage = function (event) {
+            var messages = document.getElementById('messages');
+            var message = document.createElement('div');
+            var data = JSON.parse(event.data);
+            var time = new Date(data.time).toLocaleTimeString();
+            message.textContent = time + " [" + data.username + "]: " + data.message;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight; // Auto-scroll to the latest message
+        };
+
+        function sendMessage() {
+            var input = document.getElementById('messageInput');
+            var username = document.getElementById('username').value.trim();
+            if (input.value.trim() !== "" && username !== "") {
+                var message = JSON.stringify({ username: username, message: input.value, time: new Date().toISOString() });
+                socket.send(message);
+                input.value = '';
+            }
+        }
+    </script>
+</head>
+<body>
+<input type="text" id="username" placeholder="Your Name"/>
+<input type="text" id="messageInput" placeholder="Type a message" onkeypress="if(event.keyCode === 13) sendMessage();"/>
+<button onclick="sendMessage()">Send</button>
+<div id="messages"></div>
+</body>
+</html>
